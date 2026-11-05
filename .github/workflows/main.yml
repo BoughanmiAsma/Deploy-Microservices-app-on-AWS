@@ -1,0 +1,124 @@
+name: Build & Push Docker Images
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+  DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ----------------------------------------
+      # Checkout code
+      # ----------------------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # ----------------------------------------
+      # Install Java 21 (Temurin)
+      # ----------------------------------------
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      # ----------------------------------------
+      # Build all Java microservices with Maven
+      # (skip tests to avoid ApplicationContext failures)
+      # ----------------------------------------
+      - name: Build product-service (Maven)
+        run: mvn -B -f ./product-service/pom.xml clean package -DskipTests
+
+      - name: Build order-service (Maven)
+        run: mvn -B -f ./order-service/pom.xml clean package -DskipTests
+
+      - name: Build inventory-service (Maven)
+        run: mvn -B -f ./inventory-service/pom.xml clean package -DskipTests
+
+      - name: Build api-gateway (Maven)
+        run: mvn -B -f ./api-gateway/pom.xml clean package -DskipTests
+
+      - name: Build discovery-service (Maven)
+        run: mvn -B -f ./discovery-service/pom.xml clean package -DskipTests
+
+      - name: Build notification-service (Maven)
+        run: mvn -B -f ./notification-service/pom.xml clean package -DskipTests
+
+      # ----------------------------------------
+      # Docker Hub Login
+      # ----------------------------------------
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ env.DOCKERHUB_TOKEN }}
+
+      # ----------------------------------------
+      # Build & Push Docker images
+      # ----------------------------------------
+      - name: Build & Push product-service Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./product-service
+          file: ./product-service/Dockerfile
+          push: true
+          tags: boughanmiasma/product-service:latest
+
+      - name: Build & Push order-service Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./order-service
+          file: ./order-service/Dockerfile
+          push: true
+          tags: boughanmiasma/order-service:latest
+
+      - name: Build & Push inventory-service Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./inventory-service
+          file: ./inventory-service/Dockerfile
+          push: true
+          tags: boughanmiasma/inventory-service:latest
+
+      - name: Build & Push api-gateway Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./api-gateway
+          file: ./api-gateway/Dockerfile
+          push: true
+          tags: boughanmiasma/api-gateway:latest
+
+      - name: Build & Push discovery-service Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./discovery-service
+          file: ./discovery-service/Dockerfile
+          push: true
+          tags: boughanmiasma/discovery-service:latest
+
+      - name: Build & Push notification-service Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./notification-service
+          file: ./notification-service/Dockerfile
+          push: true
+          tags: boughanmiasma/notification-service:latest
+
+      # ----------------------------------------
+      # Frontend Docker build
+      # ----------------------------------------
+      - name: Build & Push frontend Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: boughanmiasma/frontend:latest

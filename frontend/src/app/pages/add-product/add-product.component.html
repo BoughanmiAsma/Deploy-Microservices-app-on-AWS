@@ -1,0 +1,310 @@
+<div class="min-h-screen bg-gradient-to-b from-slate-50 via-slate-100/50 to-slate-100 py-10 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-6xl mx-auto">
+    
+    <!-- Breadcrumb & Back -->
+    <div class="flex items-center justify-between mb-8">
+      <div class="flex items-center gap-2 text-sm text-slate-500">
+        <a routerLink="/" class="hover:text-indigo-600 transition-colors flex items-center gap-1 font-medium">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Catalogue
+        </a>
+        <span>/</span>
+        <span class="text-slate-800 font-bold">{{ isEditMode ? 'Modifier l\'article' : 'Nouveau Produit' }}</span>
+      </div>
+
+      <a routerLink="/" class="text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3.5 py-1.5 rounded-xl transition-all">
+        Retour à la boutique
+      </a>
+    </div>
+
+    <!-- Feedback Alerts -->
+    @if (productCreated) {
+      <div class="mb-8 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-between shadow-sm animate-fade-in">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-sm">
+            ✓
+          </div>
+          <div>
+            <h4 class="font-bold text-sm">Produit créé avec succès !</h4>
+            <p class="text-xs text-emerald-600">L'article et son stock ont été enregistrés avec succès dans MongoDB.</p>
+          </div>
+        </div>
+        <a routerLink="/" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all">
+          Voir dans la boutique →
+        </a>
+      </div>
+    }
+
+    @if (productUpdated) {
+      <div class="mb-8 p-4 rounded-2xl bg-blue-50 border border-blue-200 text-blue-800 flex items-center justify-between shadow-sm animate-fade-in">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-sm">
+            ✓
+          </div>
+          <div>
+            <h4 class="font-bold text-sm">Produit mis à jour avec succès !</h4>
+            <p class="text-xs text-blue-600">Redirection vers la boutique en cours...</p>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (errorMessage) {
+      <div class="mb-8 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 flex items-center gap-3 shadow-sm">
+        <span class="text-xl">⚠️</span>
+        <p class="text-xs font-semibold">{{ errorMessage }}</p>
+      </div>
+    }
+
+    <!-- 2-Column Layout: Form & Live Preview -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      
+      <!-- Left: Form Card -->
+      <div class="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-sm">
+        <div class="mb-6 flex items-center justify-between">
+          <div>
+            <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">
+              {{ isEditMode ? 'Modifier l\'article' : 'Ajouter un article en rayon' }}
+            </h2>
+            <p class="text-xs text-slate-500 mt-1">Espace Vendeur : Renseignez le modèle, le prix, le stock disponible et téléchargez la photo.</p>
+          </div>
+          <span class="px-3 py-1 text-xs font-bold rounded-xl bg-purple-100 text-purple-700 border border-purple-200">
+            Espace Vendeur
+          </span>
+        </div>
+
+        <form [formGroup]="addProductForm" (ngSubmit)="onSubmit()" class="space-y-5">
+          
+          <!-- SKU Code -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5" for="skuCode">
+              Référence / Code Modèle <span class="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="skuCode"
+              formControlName="skuCode"
+              placeholder="ex: IPHONE-15-PRO-256"
+              class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-mono text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all uppercase"
+            />
+            @if (skuCode?.invalid && (skuCode?.dirty || skuCode?.touched)) {
+              <p class="mt-1 text-xs text-rose-500 font-medium">La référence modèle est requise (min 3 caractères).</p>
+            }
+          </div>
+
+          <!-- Product Name -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5" for="name">
+              Nom commercial de l'article <span class="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="name"
+              formControlName="name"
+              placeholder="ex: Apple iPhone 15 Pro Titane Naturel 256GB"
+              class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+            />
+            @if (name?.invalid && (name?.dirty || name?.touched)) {
+              <p class="mt-1 text-xs text-rose-500 font-medium">Le nom est requis (min 3 caractères).</p>
+            }
+          </div>
+
+          <!-- Grid: Price & Stock -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Price -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5" for="price">
+                Prix unitaire TTC (€) <span class="text-rose-500">*</span>
+              </label>
+              <div class="relative">
+                <input
+                  type="number"
+                  step="0.01"
+                  id="price"
+                  formControlName="price"
+                  placeholder="ex: 1299.99"
+                  class="w-full pl-4 pr-10 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                />
+                <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400 font-bold text-sm">
+                  €
+                </span>
+              </div>
+              @if (price?.invalid && (price?.dirty || price?.touched)) {
+                <p class="mt-1 text-xs text-rose-500 font-medium">Prix valide requis (> 0).</p>
+              }
+            </div>
+
+            <!-- Stock -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5" for="stock">
+                Stock disponible <span class="text-rose-500">*</span>
+              </label>
+              <div class="relative">
+                <input
+                  type="number"
+                  id="stock"
+                  formControlName="stock"
+                  placeholder="ex: 25"
+                  class="w-full pl-4 pr-12 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                />
+                <span class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400 text-xs font-medium">
+                  unités
+                </span>
+              </div>
+              @if (stock?.invalid && (stock?.dirty || stock?.touched)) {
+                <p class="mt-1 text-xs text-rose-500 font-medium">Stock minimum 0.</p>
+              }
+            </div>
+          </div>
+
+          <!-- Image Upload Component -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              Photo / Image de l'article
+            </label>
+            
+            <div class="border-2 border-dashed border-slate-200 hover:border-indigo-400 rounded-2xl p-4 bg-slate-50/50 hover:bg-indigo-50/30 transition-all text-center relative group">
+              <input
+                type="file"
+                id="imageFile"
+                accept="image/*"
+                (change)="onFileSelected($event)"
+                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              />
+              <div class="flex flex-col items-center justify-center gap-2 py-2">
+                <div class="w-10 h-10 rounded-full bg-indigo-50 group-hover:bg-indigo-100 text-indigo-600 flex items-center justify-center transition-colors">
+                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-xs font-bold text-slate-700">
+                    {{ imageFileName ? imageFileName : 'Cliquez pour charger une image ou glissez-déposez' }}
+                  </p>
+                  <p class="text-[11px] text-slate-400 mt-0.5">PNG, JPG, WEBP jusqu'à 5 Mo</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Alternative: Direct Image URL -->
+            <div class="mt-2 flex items-center gap-2">
+              <span class="text-[11px] text-slate-400 font-medium">Ou lien URL :</span>
+              <input
+                type="url"
+                formControlName="imageUrl"
+                placeholder="https://images.unsplash.com/photo-..."
+                class="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              />
+              @if (addProductForm.get('imageUrl')?.value) {
+                <button 
+                  type="button" 
+                  (click)="removeImage()" 
+                  class="text-[11px] text-rose-500 hover:text-rose-700 font-semibold px-2 py-1 bg-rose-50 rounded-lg">
+                  Effacer
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5" for="description">
+              Caractéristiques & Fiche technique <span class="text-rose-500">*</span>
+            </label>
+            <textarea
+              id="description"
+              rows="3"
+              formControlName="description"
+              placeholder="Écran Super Retina, puce A17 Pro, autonomie 23h, câble USB-C fourni, couleur..."
+              class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all leading-relaxed"
+            ></textarea>
+            @if (description?.invalid && (description?.dirty || description?.touched)) {
+              <p class="mt-1 text-xs text-rose-500 font-medium">La description doit comporter au moins 10 caractères.</p>
+            }
+          </div>
+
+          <!-- Submit Button -->
+          <button
+            type="submit"
+            [disabled]="addProductForm.invalid || isSubmitting"
+            class="w-full py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/25 hover:shadow-indigo-600/40 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+            @if (isSubmitting) {
+              <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+              </svg>
+              <span>{{ isEditMode ? 'Mise à jour en cours...' : 'Publication en cours...' }}</span>
+            } @else {
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              <span>{{ isEditMode ? 'Enregistrer les modifications' : 'Mettre en vente sur la boutique' }}</span>
+            }
+          </button>
+        </form>
+      </div>
+
+      <!-- Right: Live Preview Card (Strict Uniform Dimension aspect-4/3) -->
+      <div class="lg:col-span-5 sticky top-28 space-y-4">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Aperçu fiche vitrine (Dimensions identiques)</span>
+          <span class="text-[10px] text-indigo-600 font-semibold bg-indigo-50 px-2 py-0.5 rounded-full">Rendu direct</span>
+        </div>
+
+        <div class="bg-white rounded-3xl border border-slate-200/90 shadow-lg overflow-hidden flex flex-col">
+          <!-- Image Box fixed height 208px same as product grid cards -->
+          <div class="relative overflow-hidden bg-slate-100 w-full" style="height:208px;">
+            <img 
+              [src]="getPreviewImage()" 
+              alt="Aperçu"
+              class="w-full h-full object-cover object-center"
+            />
+            <span class="absolute top-3 left-3 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/90 backdrop-blur-md text-indigo-700 border border-white/60 shadow-xs">
+              {{ isEditMode ? 'En Modification' : 'Nouveau' }}
+            </span>
+            <span class="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-slate-900/80 backdrop-blur-md text-emerald-400 flex items-center gap-1 shadow-xs">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              Stock : {{ addProductForm.get('stock')?.value ?? 0 }} unités
+            </span>
+          </div>
+
+          <!-- Body -->
+          <div class="p-5">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[11px] font-mono text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">
+                {{ addProductForm.get('skuCode')?.value || 'RÉFÉRENCE' }}
+              </span>
+              <div class="flex items-center text-amber-400 text-xs font-semibold gap-1">
+                <span>★</span>
+                <span class="text-slate-600">5.0</span>
+              </div>
+            </div>
+
+            <h3 class="text-base font-bold text-slate-900 line-clamp-1 mb-1">
+              {{ addProductForm.get('name')?.value || 'Titre de l\'article...' }}
+            </h3>
+
+            <p class="text-xs text-slate-500 line-clamp-2 mb-4 leading-relaxed">
+              {{ addProductForm.get('description')?.value || 'Détails, spécifications techniques (mémoire, processeur, coloris)...' }}
+            </p>
+
+            <div class="pt-3 border-t border-slate-100 flex items-baseline justify-between">
+              <span class="text-xs text-slate-400 font-medium">Prix unitaire</span>
+              <div class="text-xl font-extrabold text-slate-900">
+                {{ (addProductForm.get('price')?.value || 0) | currency:'EUR':'symbol':'1.2-2':'fr' }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-100/80 text-xs text-indigo-900 leading-relaxed">
+          🛍️ <strong>Contrôle qualité image :</strong> Toutes les images de vos articles sont automatiquement cadrées en format uniforme (ratio 4:3 centré) afin de garantir une vitrine e-commerce impeccable et homogène.
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>

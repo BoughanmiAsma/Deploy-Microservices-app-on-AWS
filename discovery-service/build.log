@@ -1,0 +1,47 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -------------< com.sesame.microservices:discovery-service >-------------
+[INFO] Building discovery-service 1.0-SNAPSHOT
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot-maven-plugin:3.2.4:build-image (default-cli) > package @ discovery-service >>>
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:resources (default-resources) @ discovery-service ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:compile (default-compile) @ discovery-service ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:testResources (default-testResources) @ discovery-service ---
+[INFO] skip non existing resourceDirectory C:\Users\h4mdi\Documents\cours-devops\spring cloud\spring-boot-3-microservices-course\discovery-service\src\test\resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:testCompile (default-testCompile) @ discovery-service ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- maven-surefire-plugin:3.1.2:test (default-test) @ discovery-service ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- maven-jar-plugin:3.3.0:jar (default-jar) @ discovery-service ---
+[INFO] Building jar: C:\Users\h4mdi\Documents\cours-devops\spring cloud\spring-boot-3-microservices-course\discovery-service\target\discovery-service-1.0-SNAPSHOT.jar
+[INFO] 
+[INFO] --- maven-invoker-plugin:3.6.0:run (build-all-images) @ discovery-service ---
+[INFO] No projects were selected for execution.
+[INFO] 
+[INFO] <<< spring-boot-maven-plugin:3.2.4:build-image (default-cli) < package @ discovery-service <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot-maven-plugin:3.2.4:build-image (default-cli) @ discovery-service ---
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  5.799 s
+[INFO] Finished at: 2025-11-03T23:05:44+01:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.springframework.boot:spring-boot-maven-plugin:3.2.4:build-image (default-cli) on project discovery-service: Execution default-cli of goal org.springframework.boot:spring-boot-maven-plugin:3.2.4:build-image failed: Invalid Docker publish registry configuration, either token or username/password must be provided -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/PluginExecutionException

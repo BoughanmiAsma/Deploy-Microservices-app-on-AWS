@@ -1,0 +1,11 @@
+{
+  "orderNumber": "ORD-20251019-001",
+  "skuCode": "IPHONE-15-BLACK-128GB",
+  "price": 1299.99,
+  "quantity": 2,
+  "userDetails": {
+    "email": "john.doe@example.com",
+    "firstName": "John",
+    "lastName": "Doe"
+  }
+}
