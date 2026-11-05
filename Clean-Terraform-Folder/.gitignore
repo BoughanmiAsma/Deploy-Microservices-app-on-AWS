@@ -1,0 +1,6 @@
+# Ignore les dossiers de plugins Terraform et les states locaux
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars
