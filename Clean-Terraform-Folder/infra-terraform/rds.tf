@@ -47,12 +47,12 @@ resource "aws_security_group" "rds" {
 
 # --- RDS : order-service ------------------------------------------------------
 resource "aws_db_instance" "order" {
-  identifier             = "${local.project}-order-db"
-  engine                 = "mysql"
-  engine_version         = "8.0"
-  instance_class         = "db.t3.micro"
-  allocated_storage      = 20
-  storage_encrypted      = true
+  identifier        = "${local.project}-order-db"
+  engine            = "mysql"
+  engine_version    = "8.0"
+  instance_class    = "db.t3.micro"
+  allocated_storage = 20
+  storage_encrypted = true
 
   db_name  = "order_service"
   username = "order_user"
@@ -70,12 +70,12 @@ resource "aws_db_instance" "order" {
 
 # --- RDS : inventory-service --------------------------------------------------
 resource "aws_db_instance" "inventory" {
-  identifier             = "${local.project}-inventory-db"
-  engine                 = "mysql"
-  engine_version         = "8.0"
-  instance_class         = "db.t3.micro"
-  allocated_storage      = 20
-  storage_encrypted      = true
+  identifier        = "${local.project}-inventory-db"
+  engine            = "mysql"
+  engine_version    = "8.0"
+  instance_class    = "db.t3.micro"
+  allocated_storage = 20
+  storage_encrypted = true
 
   db_name  = "inventory_service"
   username = "inventory_user"

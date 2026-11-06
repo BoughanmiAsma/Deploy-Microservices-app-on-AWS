@@ -23,5 +23,9 @@ provider "aws" {
     secretsmanager = "http://localhost:4566"
     ec2            = "http://localhost:4566"
     rds            = "http://localhost:4566"
+    kafka          = "http://localhost:4566"
+    cognitoidp     = "http://localhost:4566"
+    eks            = "http://localhost:4566"
+    iam            = "http://localhost:4566"
   }
 }
