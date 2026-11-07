@@ -1,0 +1,168 @@
+# product-service + MongoDB dans le cluster
+# Prerequis : api-gateway.yaml applique (il cree le namespace ms-shop) et le Secret mongodb-credentials :
+#   kubectl create secret generic mongodb-credentials -n ms-shop --from-literal=username=root --from-literal=password=<mot de passe sans @ : / ?>
+# Puis : kubectl apply -f product-service.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: product-service-config
+  namespace: ms-shop
+data:
+  # Port impose ici : le Service ci-dessous vise 8080 quoi que dise application.properties
+  SERVER_PORT: "8080"
+  # Aucun backend d'observabilite dans le cluster pour l'instant
+  MANAGEMENT_TRACING_SAMPLING_PROBABILITY: "0.0"
+  # Le client Eureka est dans l'image : on le desactive
+  EUREKA_CLIENT_ENABLED: "false"
+  JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=70"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mongodb-secrets
+  namespace: ms-shop        
+type: Opaque
+stringData:                 
+  username: root
+  password: password
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongodb
+  namespace: ms-shop
+spec:
+  serviceName: mongodb
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+        - name: mongodb
+          image: mongo:7.0.5
+          ports:
+            - containerPort: 27017
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-secrets
+                  key: username
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-secrets
+                  key: password
+            # Conserve de ton manifest d'origine : ne sert que pour des scripts d'initialisation
+            - name: MONGO_INITDB_DATABASE
+              value: "product-service"
+          volumeMounts:
+            - name: data
+              mountPath: /data/db
+          readinessProbe:
+            tcpSocket:
+              port: 27017
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+  # Disque persistant via la StorageClass par defaut (local-path avec k3s).
+  # Sur un vrai EKS : le pilote EBS CSI est necessaire (pas de hostPath).
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb
+  namespace: ms-shop
+spec:
+  selector:
+    app: mongodb
+  ports:
+    - protocol: TCP
+      port: 27017
+      targetPort: 27017
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-service
+  namespace: ms-shop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: product-service
+  template:
+    metadata:
+      labels:
+        app: product-service
+    spec:
+      containers:
+        - name: product-service
+          image: 000000000000.dkr.ecr.us-east-1.localhost:4566/ms-shop/product-service:1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: product-service-config
+          env:
+            # Les deux premieres variables servent a composer l'URI (syntaxe $(NOM) de Kubernetes)
+            - name: MONGO_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-secrets
+                  key: username
+            - name: MONGO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-secrets
+                  key: password
+            - name: SPRING_DATA_MONGODB_URI
+              value: "mongodb://$(MONGO_USER):$(MONGO_PASSWORD)@mongodb:27017/product-service?authSource=admin"
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: product-service
+  namespace: ms-shop
+spec:
+  selector:
+    app: product-service
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080

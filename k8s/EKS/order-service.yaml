@@ -1,0 +1,105 @@
+# order-service (RDS MySQL + MSK) dans le cluster
+# Prerequis : api-gateway.yaml applique (il cree le namespace ms-shop) et le Secret order-db-credentials :
+#   kubectl create secret generic order-db-credentials -n ms-shop --from-literal=username=<user RDS order> --from-literal=password=<mot de passe RDS order>
+# Les marqueurs __ORDER_RDS_ENDPOINT__, __MSK_BOOTSTRAP__ et __SCHEMA_REGISTRY_URL__ sont a remplacer avant l'apply.
+# Puis : kubectl apply -f order-service.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: order-service-config
+  namespace: ms-shop
+data:
+  # Port impose ici : le Service ci-dessous vise 8081 quoi que dise application.properties
+  SERVER_PORT: "8081"
+
+  # --- Base de donnees : RDS (instance RDS dediee a order-service) ---
+  SPRING_DATASOURCE_URL: "jdbc:mysql://172.25.0.2:7002/order_service"
+
+  # --- Messagerie : MSK (remplace kafka dans le cluster) ---
+  SPRING_KAFKA_BOOTSTRAPSERVERS: "172.25.0.7:9092"
+  SPRING_KAFKA_PRODUCER_PROPERTIES_SCHEMA_REGISTRY_URL: "http://schema-registry:8081"
+
+  # --- Routage vers un autre service (meme namespace, DNS interne) ---
+  INVENTORY_SERVICE_URL: "http://inventory-service:8082"
+
+  # Aucun backend d'observabilite dans le cluster pour l'instant
+  MANAGEMENT_TRACING_SAMPLING_PROBABILITY: "0.0"
+  # Le client Eureka est dans l'image : on le desactive
+  EUREKA_CLIENT_ENABLED: "false"
+  JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=70"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: order-db-credentials  
+  namespace: ms-shop        
+type: Opaque
+stringData:  
+  username: order_user
+  password: ChangeMe-Order-123  
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+  namespace: ms-shop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-service
+  template:
+    metadata:
+      labels:
+        app: order-service
+    spec:
+      containers:
+        - name: order-service
+          image: 000000000000.dkr.ecr.us-east-1.localhost:4566/ms-shop/order-service:1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8081
+          envFrom:
+            - configMapRef:
+                name: order-service-config
+          env:
+            # Identifiants RDS : dans un Secret, jamais dans la ConfigMap
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: order-db-credentials
+                  key: username
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: order-db-credentials
+                  key: password
+          readinessProbe:
+            tcpSocket:
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8081
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+  namespace: ms-shop
+spec:
+  selector:
+    app: order-service
+  ports:
+    - protocol: TCP
+      port: 8081
+      targetPort: 8081
