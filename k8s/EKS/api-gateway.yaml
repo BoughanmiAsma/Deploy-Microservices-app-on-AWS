@@ -1,5 +1,5 @@
 # Manifest autonome du gateway : kubectl apply -f api-gateway.yaml
-# Les marqueurs __JWT_ISSUER__ et __JWT_JWKS__ sont remplaces par get-cognito-values.ps1
+# JWKS : endpoint Floci (joignable depuis le noeud). Issuer : doit etre identique au champ "iss" des jetons emis par Floci.
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -9,11 +9,11 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: api-gateway-config
-  namespace: ms-shop        
-data:   
+  namespace: ms-shop
+data:
   # --- Securite : validation des jetons Cognito ---
-  SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUERURI: "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_20e166391"
-  SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWKSETURI: "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_20e166391/.well-known/jwks.json"
+  SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUERURI: "https://floci:4566/us-east-1_20e166391"
+  SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWKSETURI: "http://172.25.0.2:4566/us-east-1_20e166391/.well-known/jwks.json"
 
   # --- Routage : nom du Service Kubernetes + port de chaque service ---
   PRODUCT_SERVICE_URL: "http://product-service:8080"
@@ -45,7 +45,7 @@ spec:
     spec:
       containers:
         - name: api-gateway
-          # Image construite depuis notre code, chargee dans le cluster avec 'ctr images import'
+          # Image importee dans le noeud (ctr images import), sous le nom ECR
           image: 000000000000.dkr.ecr.us-east-1.localhost:4566/ms-shop/api-gateway:1.0
           imagePullPolicy: IfNotPresent
           ports:
@@ -73,15 +73,19 @@ spec:
             limits:
               memory: 512Mi
 ---
+# NodePort : le gateway est joignable depuis le reverse proxy Nginx (autre conteneur Docker)
+# via <conteneur-noeud>:30900. Les autres services restent en ClusterIP.
 apiVersion: v1
 kind: Service
 metadata:
   name: api-gateway
   namespace: ms-shop
 spec:
+  type: NodePort
   selector:
     app: api-gateway
   ports:
     - protocol: TCP
       port: 9000
       targetPort: 9000
+      nodePort: 30900

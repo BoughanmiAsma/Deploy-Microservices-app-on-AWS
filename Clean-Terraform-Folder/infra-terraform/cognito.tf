@@ -50,8 +50,8 @@ resource "aws_cognito_user_pool_client" "angular" {
   supported_identity_providers         = ["COGNITO"]
 
   # A completer avec l'adresse CloudFront quand elle existera
-  callback_urls = ["http://localhost:4200/"]
-  logout_urls   = ["http://localhost:4200/"]
+  callback_urls = ["https://www.websitetemplate.test"]
+  logout_urls   = ["https://www.websitetemplate.test"]
 
   explicit_auth_flows = [
     "ALLOW_USER_SRP_AUTH",

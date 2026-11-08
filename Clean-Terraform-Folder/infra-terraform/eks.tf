@@ -52,6 +52,12 @@ resource "aws_eks_cluster" "main" {
 
   tags = local.tags
 }
+resource "aws_eks_addon" "ebs_csi" {
+  cluster_name = aws_eks_cluster.main.name
+  addon_name   = "aws-ebs-csi-driver"
+
+  depends_on = [aws_eks_cluster.main]
+}
 
 # --- Role IAM des noeuds (machines qui font tourner les pods) -----------------
 resource "aws_iam_role" "eks_nodes" {
